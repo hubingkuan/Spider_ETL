@@ -1,0 +1,50 @@
+server:
+  port: 7776
+  servlet:
+    context-path: /appcenter
+  tomcat:
+    max-threads: 2000
+    max-connections: 20000
+    connection-timeout: 1000
+    accept-count: 500
+spring:
+  application:
+    name: WebAppcenter
+  profiles:
+    active: dev
+  # 让404抛出异常
+  mvc:
+    throw-exception-if-no-handler-found: true
+  resources:
+    add-mappings: false
+  # caffeine配置
+  cache:
+    type: CAFFEINE
+    caffeine:
+      # 初始缓存空间容量50 最大容量100
+      spec: initialCapacity=50, maximumSize=100
+  # Redis配置
+  redis:
+    host: localhost
+    port: 6379
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        time-between-eviction-runs: 100
+  # 邮箱配置
+  mail:
+    enable: true
+    host: smtp.qq.com
+    username: 1656956568@qq.com
+    password: rvzdajbvvhlujfja
+    port: 587
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          socketFactoryClass: javax.net.ssl.SSLSocketFactory
+# mybatis-plus
+mybatis-plus:
+  mapper-locations: classpath:/mapper/*.xml

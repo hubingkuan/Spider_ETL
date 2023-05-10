@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds">
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+
+    <springProperty scop="context" name="APP_Name" source="spring.application.name"
+                    defaultValue=""/>
+    <!-- %date表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %msg：日志消息，%n是换行符-->
+    <property name="LOG_PATTERN"
+              value="[TRACEID:%X{TraceId}] %d{HH:mm:ss.SSS} [%thread] %-5level %logger{72} [%line] -> %msg%n"/>
+    <property name="FILE_PATH" value="service-logs"/>
+    <property name="mapper.package" value="com.yeshen.appcenter.repository"/>
+    <contextName>${APP_Name}</contextName>
+
+
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>debug</level>
+        </filter>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="fileInfoLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <file>${FILE_PATH}/info.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${FILE_PATH}/info.log.%d{yyyy-MM-dd-HH}-%i</FileNamePattern>
+            <maxHistory>30</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+
+    <appender name="fileWarnLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <file>${FILE_PATH}/warn.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${FILE_PATH}/warn.log.%d{yyyy-MM-dd-HH}-%i</FileNamePattern>
+            <maxHistory>30</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+
+    <appender name="fileErrorLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <file>${FILE_PATH}/error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${FILE_PATH}/error.log.%d{yyyy-MM-dd-HH}-%i</FileNamePattern>
+            <maxHistory>30</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!--设置某个包特殊的日志级别-->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.mongodb" level="WARN"/>
+    <logger name="${mapper.package}" additivity="false" level="DEBUG">
+        <appender-ref ref="console"/>
+    </logger>
+
+
+    <!--开发环境配置-->
+    <springProfile name="dev">
+        <root level="DEBUG">
+            <appender-ref ref="console"/>
+            <appender-ref ref="fileInfoLog"/>
+            <appender-ref ref="fileWarnLog"/>
+            <appender-ref ref="fileErrorLog"/>
+        </root>
+    </springProfile>
+
+    <!--生产环境配置-->
+    <springProfile name="prd">
+        <root level="INFO">
+            <appender-ref ref="fileInfoLog"/>
+            <appender-ref ref="fileWarnLog"/>
+            <appender-ref ref="fileErrorLog"/>
+        </root>
+    </springProfile>
+</configuration>

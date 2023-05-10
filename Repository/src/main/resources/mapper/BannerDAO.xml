@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yeshen.appcenter.repository.mysql.BannerDAO">
+    <resultMap id="gameBanner" type="com.yeshen.appcenter.domain.vo.response.BannerVO">
+        <result column="post_id" property="gameId" />
+        <result column="banner" property="bannerUrl" />
+        <result column="title" property="gameName" />
+        <result column="name" property="packageName" />
+    </resultMap>
+    <select id="getBannerList" resultMap="gameBanner">
+        select wb.post_id post_id, wb.banner banner, wp.post_title title, wp.post_name name
+        from wp_banner wb
+                 left join wp_posts wp on wb.post_id = wp.ID
+    </select>
+
+    <select id="getBannerList2" fetchSize="2" resultSetType="FORWARD_ONLY"
+            resultMap="gameBanner">
+        select wb.post_id post_id, wb.banner banner, wp.post_title title, wp.post_name name
+        from wp_banner wb
+                 left join wp_posts wp on wb.post_id = wp.ID
+    </select>
+</mapper>

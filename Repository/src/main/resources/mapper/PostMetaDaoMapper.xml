@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yeshen.appcenter.repository.mysql.PostMetaDAO">
+    <insert id="insertPostMeta">
+         insert into wp_postmeta
+            (post_id,meta_key,meta_value)
+            values (#{postId},#{metaKey},#{metaValue})
+    </insert>
+
+    <update id="updateMetaValueByPostIdAndMetaKey">
+         update wp_postmeta
+         set meta_value=#{metaValue}
+             where post_id=#{postId}
+             and meta_key=#{metaKey}
+    </update>
+
+    <select id="getPostMetaList" resultType="com.yeshen.appcenter.domain.entity.PostMeta">
+        select wp.meta_id as metaId, wp.post_id as postId, wp.meta_key as metaKey, wp.meta_value as
+        metaValue
+        from wp_postmeta wp
+        where wp.meta_key = #{metaKey}
+        and wp.post_id in
+        <foreach collection="postIds" item="postId" index="index"
+                 open="(" close=")" separator=",">
+            #{postId}
+        </foreach>
+    </select>
+
+    <select id="getPostIdByMetaKeyAndMetaValue" resultType="java.lang.Long">
+        select post_id
+        from wp_postmeta
+        where meta_key = #{metaKey}
+          and meta_value = #{metaValue} limit 1
+    </select>
+
+    <select id="getMetaValueByMetaKeyAndPostId" resultType="java.lang.String">
+        select meta_value
+        from wp_postmeta wp
+        where wp.meta_key = #{metaKey}
+        and wp.post_id =#{postId} limit 1
+    </select>
+</mapper>

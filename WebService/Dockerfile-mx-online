@@ -1,0 +1,8 @@
+FROM registry.cn-hongkong.aliyuncs.com/bignox_yeshen/nox_java:v1.8.0_302 
+RUN mkdir -p /home/appcenter && mkdir -p /home/appcenter/service-logs #创建基础目录，比如日志目录
+ENV TZ=CST-8 
+ENV LANG C.UTF-8 
+COPY ./target/WebAppcenterService.jar /home/appcenter
+WORKDIR /home/appcenter 
+EXPOSE 7777  
+CMD java -jar -Xmx512m  WebAppcenterService.jar  --server.port=7777  --spring.profiles.active=prd

@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yeshen.appcenter.repository.mysql.GameDAO">
+    <resultMap id="indexGameMap" type="com.yeshen.appcenter.domain.vo.response.GameDisplayRepVO">
+        <id property="id" column="id"/>
+        <result property="gameName" column="gameName"/>
+        <result property="packageName" column="packageName"/>
+        <result property="gameGrade" column="gameGrade"/>
+        <result property="imgUrl" column="imgUrl"/>
+    </resultMap>
+
+    <resultMap id="gameEntity" type="com.yeshen.appcenter.domain.vo.response.GameDisplayRepVO">
+        <id column="id" property="id"/>
+        <result column="post_author" property="postAuthor"/>
+        <result column="post_title" property="gameName"/>
+        <result column="post_name" property="packageName"/>
+        <result column="down_count" property="downCount"/>
+        <result column="post_excerpt" property="excerpt"/>
+        <result column="post_modified" property="lastModTime"/>
+    </resultMap>
+
+
+    <insert id="insertWPPost" parameterType="com.yeshen.appcenter.domain.entity.WPPost" useGeneratedKeys="true" keyProperty="id" keyColumn="ID">
+        insert into wp_posts (post_author,
+                              post_date,
+                              post_date_gmt,
+                              post_content,
+                              post_title,
+                              post_excerpt,
+                              post_status,
+                              comment_status,
+                              ping_status,
+                              post_password,
+                              post_name,
+                              to_ping,
+                              pinged,
+                              post_modified,
+                              post_modified_gmt,
+                              post_content_filtered,
+                              post_parent,
+                              guid,
+                              menu_order,
+                              post_type,
+                              post_mime_type,
+                              comment_count
+                              ) values
+        (
+            #{app.postAuthor},
+            #{app.postDate},
+            #{app.postDateGmt},
+            #{app.postContent},
+            #{app.postTitle},
+            #{app.postExcerpt},
+            #{app.postStatus},
+            #{app.commentStatus},
+            #{app.pingStatus},
+            #{app.postPassword},
+            #{app.postName},
+            #{app.toPing},
+            #{app.pinged},
+            #{app.postModified},
+            #{app.postModifiedGmt},
+            #{app.postContentFiltered},
+            #{app.postParent},
+            #{app.guid},
+            #{app.menuOrder},
+            #{app.postType},
+            #{app.postMimeType},
+            #{app.commentCount}
+        )
+    </insert>
+
+
+
+    <select id="getType" resultType="java.lang.String">
+        select wte.name type
+        from wp_term_relationships wtr
+                 left join wp_term_taxonomy wtt on wtt.term_taxonomy_id = wtr.term_taxonomy_id
+                 left join wp_terms wte on wte.term_id = wtt.term_id
+        where wtt.parent != 0
+        and wtt.taxonomy = 'game_cate'
+        and wtr.object_id = #{postId}
+    </select>
+
+    <select id="getTypeList" resultType="com.yeshen.appcenter.domain.vo.response.TypeVO">
+        select wtr.object_id postId,wte.name type
+        from wp_term_relationships wtr
+        left join wp_term_taxonomy wtt on wtt.term_taxonomy_id = wtr.term_taxonomy_id
+        left join wp_terms wte on wte.term_id = wtt.term_id
+        where wtt.parent != 0
+        and wtt.taxonomy = 'game_cate'
+        and wtr.object_id in
+        <foreach collection="posts" item="postId" index="index"
+                 open="(" close=")" separator=",">
+            #{postId}
+        </foreach>
+    </select>
+
+    <select id="getRecommendGamesWithGradeAndImage" resultMap="indexGameMap">
+        select a.ID         as id,
+               a.post_title as gameName,
+               a.post_name  as packageName,
+               b.meta_value as gameGrade,
+               c.meta_value as imgUrl
+        from wp_posts a
+                 left join wp_postmeta b on a.ID = b.post_id and b.meta_key = 'gameGrade'
+                 left join wp_postmeta c on a.ID = c.post_id and c.meta_key = 'gameIcon'
+        where a.ID in (
+            select `object_id`
+            from `wp_term_relationships`
+            where `term_taxonomy_id` = (select `term_id` from `wp_terms` where name = #{termName}))
+          and a.ID in (
+            select `object_id`
+            from `wp_term_relationships`
+            where `term_taxonomy_id` = (select `term_id` from `wp_terms` where slug = "homePage"))
+          and a.post_type = 'game_management'
+          and a.post_status = 'publish'
+        order by b.meta_value - 0 desc limit #{size}
+    </select>
+
+    <select id="getGameDownloadTopTen" resultMap="gameEntity">
+        SELECT wp.ID          AS id,
+               wp.post_title  AS post_title,
+               wp.post_name   AS post_name,
+               down.downcount AS down_count
+        FROM wp_posts wp
+                 LEFT JOIN (
+            SELECT post_id, replace(SUBSTRING_INDEX(meta_value, '+', 1), ',', '') as downcount
+            FROM wp_postmeta
+            WHERE meta_key = 'downloadCount') down
+                           ON wp.ID = down.post_id
+        WHERE wp.post_type = 'game_management'
+          AND wp.post_status = 'publish'
+        GROUP BY wp.`ID`
+        ORDER BY down.downcount - 0 DESC LIMIT 10;
+    </select>
+
+    <select id="getGamesWithGradeAndImageByLabel" resultMap="indexGameMap">
+        select a.ID         as id,
+               a.post_title as gameName,
+               a.post_name  as packageName,
+               b.meta_value as gameGrade,
+               c.meta_value as imgUrl
+        from wp_posts a
+                 left join wp_postmeta b on a.ID = b.post_id and b.meta_key = 'gameGrade'
+                 left join wp_postmeta c on a.ID = c.post_id and c.meta_key = 'gameIcon'
+        where a.ID in (
+            select b.object_id
+            from wp_terms a
+                     left join wp_term_relationships b
+                               on a.term_id = b.term_taxonomy_id
+            where a.term_id in (select term_id from wp_terms where slug = #{labelName}))
+          and a.post_type = 'game_management'
+          and a.post_status = 'publish'
+        order by b.meta_value - 0 desc limit #{startIndex}, #{length}
+    </select>
+
+    <select id="getBannerImageUrlByGameId" resultType="java.lang.String">
+        select meta_value
+        from wp_postmeta
+        where meta_key = 'gameBanner'
+          and post_id = #{gameId}
+    </select>
+
+    <select id="getBottomGameNotInGameId"
+            resultType="com.yeshen.appcenter.domain.vo.response.GameDisplayRepVO">
+        select a.ID as id, a.post_title as gameName, a.post_name as packageName, b.meta_value as
+        gameGrade, c.meta_value as imgUrl
+        from wp_posts a
+        left join wp_postmeta b on a.ID = b.post_id and b.meta_key = 'gameGrade'
+        left join wp_postmeta c on a.ID = c.post_id and c.meta_key = 'gameIcon'
+        <where>
+            a.post_type='game_management' and a.post_status='publish'
+            <if test="gameId != null">
+                and a.ID != #{gameId}
+            </if>
+        </where>
+        ORDER BY `ID` desc limit 15
+    </select>
+
+    <select id="getAttributeByGameId" resultType="com.yeshen.appcenter.domain.entity.PostMeta">
+        select meta_key as metaKey, meta_value as metaValue
+        from `wp_postmeta`
+        where post_id = #{gameId}
+          and meta_key in
+              ('gameBanner', 'gameIcon', 'gameGrade', 'updateTime', 'gameVersion', 'downloadCount',
+               'downloadUrl', 'apkPackage', 'apkUrl', 'apkName', 'gamePeculiarity', 'gamePhoto', 'gameVideo')
+    </select>
+
+    <select id="getGameNameByGameId" resultMap="gameEntity">
+        select post_author,post_title,post_name
+        from wp_posts
+        where ID = #{gameId}  limit 1
+    </select>
+
+    <select id="getIdByPostName" resultMap="gameEntity">
+        select ID as id, post_title, post_excerpt
+        from wp_posts
+        where post_name = #{postName}
+          and post_status in ('publish', 'draft')
+          and post_type = 'game_management'
+        order by ID desc limit 1
+    </select>
+
+    <select id="getAllEffectivePackageNames" resultMap="gameEntity">
+        select post_name, post_modified
+        from wp_posts
+        where post_status in ('publish', 'draft')
+          and post_type = 'game_management'
+          and post_name !=''
+          and post_modified !='0000-00-00 00:00:00'
+    </select>
+
+    <select id="getGamesWithGradeAndImageByKeywords" resultMap="indexGameMap">
+        select a.ID         as id,
+               a.post_title as gameName,
+               a.post_name  as packageName,
+               b.meta_value as gameGrade,
+               c.meta_value as imgUrl
+        from wp_posts AS a
+                 left join wp_postmeta b on a.ID = b.post_id and b.meta_key = 'gameGrade'
+                 left join wp_postmeta c on a.ID = c.post_id and c.meta_key = 'gameIcon'
+        where a.post_type = 'game_management'
+          and a.post_status = 'publish'
+          and a.post_title like concat('%', #{keywords}, '%')
+            limit #{startIndex}
+            , #{length}
+    </select>
+
+    <select id="getGamesWithGradeAndImageByNaturalLanguageSearch" resultMap="indexGameMap">
+        select a.ID         as id,
+               a.post_title as gameName,
+               a.post_name  as packageName,
+               b.meta_value as gameGrade,
+               c.meta_value as imgUrl
+        from wp_posts AS a
+                 left join wp_postmeta b on a.ID = b.post_id and b.meta_key = 'gameGrade'
+                 left join wp_postmeta c on a.ID = c.post_id and c.meta_key = 'gameIcon'
+        where a.post_type = 'game_management'
+                  and a.post_status = 'publish'
+                  and MATCH (a.post_title) AGAINST(#{keywords} IN NATURAL LANGUAGE MODE)
+            limit #{startIndex}
+            , #{length}
+    </select>
+
+    <select id="findLabelIdByName" resultType="java.lang.Long">
+        select term_id from wp_terms where name = #{labelName} limit 1
+    </select>
+
+    <select id="findRelationIdByLabelId" resultType="java.lang.Long">
+        select term_taxonomy_id from wp_term_taxonomy where term_id = #{termId} limit 1
+    </select>
+
+    <select id="findRootGameCateRelationId" resultType="java.lang.Long">
+        select term_taxonomy_id from wp_term_taxonomy where taxonomy = 'game_cate' and parent = 0 limit 1
+    </select>
+
+    <select id="existAppIdAndRelationId" resultType="java.lang.Integer">
+        select count(1) from wp_term_relationships where term_taxonomy_id = #{relationId} and object_id = #{appId}
+    </select>
+
+    <insert id="insertWPTerms" parameterType="com.yeshen.appcenter.domain.entity.Terms" useGeneratedKeys="true"  keyProperty="termId" keyColumn="term_id">
+        insert into wp_terms(name, slug, term_group) values (#{terms.name},#{terms.slug},0)
+    </insert>
+
+    <insert id="insertWPTermTaxonomy">
+        insert into wp_term_taxonomy(term_taxonomy_id,term_id, taxonomy, parent, count, description) values(#{labelId},#{labelId},#{labelType},#{parent},0,'')
+    </insert>
+
+    <insert id="insertWPTermRelationships">
+        insert into wp_term_relationships(object_id, term_taxonomy_id, term_order) values(#{appId},#{relationId},0)
+    </insert>
+
+    <select id="getWebSiteTitle" resultType="java.lang.String">
+        select `option_value`  from `wp_options`  where `option_name` ='blogname'
+    </select>
+
+    <select id="getIdByTitle" resultType="java.lang.Long">
+        select ID
+        from wp_posts
+        where post_title = #{postTitle}
+        limit 1
+    </select>
+
+    <update id="updatePostTitleByPostId">
+        update wp_posts
+        set post_title=#{postTitle}
+        where ID=#{postId}
+    </update>
+
+    <update id="updatePackageNameByPostId">
+        update wp_posts
+        set post_name=#{postName}
+        where ID=#{postId}
+    </update>
+
+    <update id="updatePostContent">
+        update  wp_posts  set post_content=#{content}  where ID=#{id}
+    </update>
+
+    <select id="gameNameIsExist" resultType="int">
+        select count(1) from wp_posts  where post_title =#{gameName}
+    </select>
+</mapper>

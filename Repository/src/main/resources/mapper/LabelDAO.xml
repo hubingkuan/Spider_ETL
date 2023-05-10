@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yeshen.appcenter.repository.mysql.LabelDAO">
+
+    <select id="getDistinctLabelsByParentId" resultType="com.yeshen.appcenter.domain.entity.Label">
+        select min(term_id) as id , name , slug
+        from `wp_terms`
+        where `term_id` in (select `term_id` from `wp_term_taxonomy` where `parent` = #{parentId} and taxonomy='game_cate')
+          and name !=""
+        GROUP BY name,slug
+        ORDER BY name
+    </select>
+
+    <select id="getRootLabelId" resultType="java.lang.Long">
+        select term_taxonomy_id
+        from wp_term_taxonomy
+        where taxonomy = 'game_cate'
+          and parent = 0 limit 1
+    </select>
+</mapper>

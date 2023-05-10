@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yeshen.appcenter.repository.mysql.ReptileDAO">
+
+
+    <select id="getReptileAppListByRegion"
+            resultType="com.yeshen.appcenter.domain.vo.response.ReptileApp">
+        select appc.id,
+               appc.title                   as title,
+               app.package_url              as packageName,
+               appc.logo_url                as logoUrl,
+               appc.install_apk_url         as gameLinkUrl,
+               case
+                   when appc.list_type = 5 then 5
+                   when appc.list_type = 10 then 10
+                   else 1 end               AS gameType,
+               appc.score                   as score,
+               appc.game_update_time        as gameUpdateTime,
+               appc.image_urls              as imageUrls,
+               appc.short_desc              as shortDesc,
+               appc.detail                  as detail,
+               appc.detail_html             as detailHtml,
+               appc.app_version             as appVersion,
+               appc.min_android_rom_version as minAndroidRomVersion,
+               appc.video_link              as videoLink,
+               appc.label                   as label,
+               appc.install_count           AS installCount
+        from manual_app app
+                 join manual_app_country appc
+                      on (app.id = appc.app_id)
+        where app.update_time > unix_timestamp(date_sub(CURRENT_DATE, INTERVAL #{day} Day)) * 1000
+          and appc.update_time > unix_timestamp(date_sub(CURRENT_DATE, INTERVAL #{day} Day)) * 1000
+          and appc.iso_code = #{region}
+    </select>
+
+    <select id="getLogoUrlByPackageAndRegion" resultType="java.lang.String">
+        select a.logo_url
+        from manual_app a
+                 left join manual_app_country b on a.id = b.app_id
+        where a.package_url = #{packageName}
+          and b.iso_code = #{region} limit 1
+    </select>
+
+    <select id="getReptileAppByPackageAndRegion"
+            resultType="com.yeshen.appcenter.domain.vo.response.ReptileApp">
+        select appc.id,
+               appc.title                   as title,
+               app.package_url              as packageName,
+               appc.logo_url                as logoUrl,
+               appc.install_apk_url         as gameLinkUrl,
+               case
+                   when appc.list_type = 5 then 5
+                   when appc.list_type = 10 then 10
+                   else 1 end               AS gameType,
+               appc.score                   as score,
+               appc.game_update_time        as gameUpdateTime,
+               appc.image_urls              as imageUrls,
+               appc.short_desc              as shortDesc,
+               appc.detail                  as detail,
+               appc.detail_html             as detailHtml,
+               appc.app_version             as appVersion,
+               appc.min_android_rom_version as minAndroidRomVersion,
+               appc.video_link              as videoLink,
+               appc.label                   as label,
+               appc.install_count           AS installCount
+        from manual_app app
+                 join manual_app_country appc
+                      on (app.id = appc.app_id)
+        where app.package_url = #{packageName}
+          and appc.iso_code = #{region} limit 1
+    </select>
+</mapper>
