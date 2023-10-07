@@ -1,12 +1,8 @@
-###ETL和taptap爬虫 
-> 线下启动命令:nohup java -jar -Xmx512m ./WebAppcenter.jar  --server.port=7777  --spring.profiles.active=dev  > /dev/null 2>&1 & 
-
-> 线上启动命令:nohup java -jar -Xmx512m ./WebAppcenter.jar  --server.port=7777  --spring.profiles.active=prd  > /dev/null 2>&1 &
-
-
 国内taptap爬虫环境安装:
 1、sudo yum install dnf
+
 2、wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+
 3、sudo dnf install -y google-chrome-stable_current_x86_64.rpm
 
 4、查看chrome版本:google-chrome --version
